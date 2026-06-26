@@ -2,16 +2,19 @@ import { AlertTriangle, RefreshCw } from 'lucide-react-native';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { HourlyForecastList } from '@/components/HourlyForecastList';
 import { LandingProbabilityCard } from '@/components/LandingProbabilityCard';
 import { WeatherCard } from '@/components/WeatherCard';
 import { SLEIPNER_LOCATION } from '@/constants/location';
 import { useWeather } from '@/hooks/useWeather';
+import { getNext24Hours } from '@/utils/forecastAggregation';
 
 export default function HomeScreen() {
-  const { data, loading, refreshing, error, refresh } = useWeather(
+  const { data, points, loading, refreshing, error, refresh } = useWeather(
     SLEIPNER_LOCATION.latitude,
     SLEIPNER_LOCATION.longitude
   );
+  const next24Hours = getNext24Hours(points);
 
   return (
     <SafeAreaView className="flex-1 bg-offshore-bg" edges={['top', 'bottom']}>
@@ -68,6 +71,7 @@ export default function HomeScreen() {
               weather={data}
             />
             <LandingProbabilityCard weather={data} />
+            <HourlyForecastList points={next24Hours} />
           </>
         ) : null}
       </ScrollView>

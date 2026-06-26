@@ -51,6 +51,20 @@ export interface MetNoOceanTimeStep {
   };
 }
 
+export interface ForecastPoint {
+  time: string;
+  temperature: number;
+  windSpeed: number;
+  windFromDirection: number;
+  windGust?: number;
+  symbolCode?: string;
+  precipitation?: number;
+  fogAreaFraction?: number;
+  cloudAreaFraction?: number;
+  probabilityOfThunder?: number;
+  waveHeight?: number;
+}
+
 export interface WeatherSnapshot {
   temperature: number;
   windSpeed: number;

@@ -1,8 +1,16 @@
-import type { WeatherSnapshot } from '@/types/weather';
-
 const KT_PER_MS = 1.94384;
 
 export type LandingLevel = 'good' | 'caution' | 'poor' | 'no-go';
+
+export interface LandingProbabilityInput {
+  windSpeed: number;
+  windGust?: number;
+  fogAreaFraction?: number;
+  cloudAreaFraction?: number;
+  waveHeight?: number;
+  waveDataUnavailable?: boolean;
+  probabilityOfThunder?: number;
+}
 
 export interface LandingFactor {
   score: number;
@@ -82,15 +90,22 @@ function scoreThunder(probabilityOfThunder?: number): LandingFactor {
   return { score: 100 * (1 - t * t), excluded: false };
 }
 
+export function levelFromProbability(probability: number): LandingLevel {
+  if (probability >= 75) return 'good';
+  if (probability >= 50) return 'caution';
+  if (probability >= 25) return 'poor';
+  return 'no-go';
+}
+
 export function calculateLandingProbability(
-  snapshot: WeatherSnapshot
+  input: LandingProbabilityInput
 ): LandingProbabilityResult {
   const factors = {
-    wind: scoreWind(snapshot.windSpeed, snapshot.windGust),
-    visibility: scoreVisibility(snapshot.fogAreaFraction),
-    cloud: scoreCloud(snapshot.cloudAreaFraction),
-    waves: scoreWaves(snapshot.waveHeight, snapshot.waveDataUnavailable),
-    thunder: scoreThunder(snapshot.probabilityOfThunder),
+    wind: scoreWind(input.windSpeed, input.windGust),
+    visibility: scoreVisibility(input.fogAreaFraction),
+    cloud: scoreCloud(input.cloudAreaFraction),
+    waves: scoreWaves(input.waveHeight, input.waveDataUnavailable),
+    thunder: scoreThunder(input.probabilityOfThunder),
   };
 
   const included = (Object.keys(factors) as (keyof typeof factors)[]).filter(
@@ -104,15 +119,9 @@ export function calculateLandingProbability(
   const probability =
     totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
 
-  if ((snapshot.probabilityOfThunder ?? 0) >= 30) {
+  if ((input.probabilityOfThunder ?? 0) >= 30) {
     return { probability: Math.min(probability, 10), level: 'no-go', factors };
   }
 
-  let level: LandingLevel;
-  if (probability >= 75) level = 'good';
-  else if (probability >= 50) level = 'caution';
-  else if (probability >= 25) level = 'poor';
-  else level = 'no-go';
-
-  return { probability, level, factors };
+  return { probability, level: levelFromProbability(probability), factors };
 }
