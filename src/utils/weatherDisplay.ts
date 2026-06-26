@@ -26,3 +26,32 @@ export function windSpeedLabel(speedMs: number): {
   if (speedMs < 17) return { label: 'Sterk vind', level: 'strong' };
   return { label: 'Sterk kuling+', level: 'severe' };
 }
+
+export function thunderRiskLabel(probabilityOfThunder?: number): {
+  label: string;
+  level: 'none' | 'low' | 'moderate' | 'high';
+} {
+  if (probabilityOfThunder === undefined || probabilityOfThunder < 10) {
+    return { label: 'Ingen lynrisiko', level: 'none' };
+  }
+  if (probabilityOfThunder < 30) {
+    return { label: 'Lav lynrisiko', level: 'low' };
+  }
+  if (probabilityOfThunder < 60) {
+    return { label: 'Moderat lynrisiko', level: 'moderate' };
+  }
+  return { label: 'Høy lynrisiko', level: 'high' };
+}
+
+export function visibilityLabel(fogAreaFraction?: number): {
+  label: string;
+  level: 'good' | 'reduced' | 'poor';
+} {
+  if (fogAreaFraction === undefined || fogAreaFraction < 20) {
+    return { label: 'God sikt', level: 'good' };
+  }
+  if (fogAreaFraction < 60) {
+    return { label: 'Redusert sikt (tåke)', level: 'reduced' };
+  }
+  return { label: 'Dårlig sikt (tåke)', level: 'poor' };
+}

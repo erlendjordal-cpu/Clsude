@@ -18,6 +18,9 @@ export interface MetNoTimeStep {
         relative_humidity?: number;
         air_pressure_at_sea_level?: number;
         wind_speed_of_gust?: number;
+        fog_area_fraction?: number;
+        cloud_area_fraction?: number;
+        probability_of_thunder?: number;
       };
     };
     next_1_hours?: {
@@ -27,6 +30,23 @@ export interface MetNoTimeStep {
     next_6_hours?: {
       summary: { symbol_code: string };
       details?: { precipitation_amount?: number };
+    };
+  };
+}
+
+export interface MetNoOceanForecastResponse {
+  properties?: {
+    timeseries?: MetNoOceanTimeStep[];
+  };
+}
+
+export interface MetNoOceanTimeStep {
+  time: string;
+  data?: {
+    instant?: {
+      details?: {
+        sea_surface_wave_height?: number;
+      };
     };
   };
 }
@@ -42,4 +62,9 @@ export interface WeatherSnapshot {
   precipitation?: number;
   forecastTime: string;
   updatedAt: string;
+  fogAreaFraction?: number;
+  cloudAreaFraction?: number;
+  probabilityOfThunder?: number;
+  waveHeight?: number;
+  waveDataUnavailable?: boolean;
 }

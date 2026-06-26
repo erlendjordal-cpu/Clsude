@@ -1,8 +1,14 @@
 import { WEATHER_USER_AGENT } from '@/constants/location';
-import type { MetNoForecastResponse, WeatherSnapshot } from '@/types/weather';
+import type {
+  MetNoForecastResponse,
+  MetNoOceanForecastResponse,
+  WeatherSnapshot,
+} from '@/types/weather';
 
 const LOCATIONFORECAST_URL =
-  'https://api.met.no/weatherapi/locationforecast/2.0/compact';
+  'https://api.met.no/weatherapi/locationforecast/2.0/complete';
+const OCEANFORECAST_URL =
+  'https://api.met.no/weatherapi/oceanforecast/2.0/complete';
 
 export class WeatherApiError extends Error {
   constructor(message: string, public readonly status?: number) {
@@ -11,12 +17,7 @@ export class WeatherApiError extends Error {
   }
 }
 
-export async function fetchWeather(
-  latitude: number,
-  longitude: number
-): Promise<WeatherSnapshot> {
-  const url = `${LOCATIONFORECAST_URL}?lat=${latitude}&lon=${longitude}`;
-
+async function fetchJson<T>(url: string): Promise<T> {
   let response: Response;
   try {
     response = await fetch(url, {
@@ -38,7 +39,39 @@ export async function fetchWeather(
     );
   }
 
-  const json: MetNoForecastResponse = await response.json();
+  return response.json();
+}
+
+async function fetchWaveHeight(
+  latitude: number,
+  longitude: number
+): Promise<{ height?: number; unavailable: boolean }> {
+  try {
+    const json = await fetchJson<MetNoOceanForecastResponse>(
+      `${OCEANFORECAST_URL}?lat=${latitude}&lon=${longitude}`
+    );
+    const height =
+      json.properties?.timeseries?.[0]?.data?.instant?.details
+        ?.sea_surface_wave_height;
+    return typeof height === 'number'
+      ? { height, unavailable: false }
+      : { unavailable: true };
+  } catch {
+    return { unavailable: true };
+  }
+}
+
+export async function fetchWeather(
+  latitude: number,
+  longitude: number
+): Promise<WeatherSnapshot> {
+  const [json, wave] = await Promise.all([
+    fetchJson<MetNoForecastResponse>(
+      `${LOCATIONFORECAST_URL}?lat=${latitude}&lon=${longitude}`
+    ),
+    fetchWaveHeight(latitude, longitude),
+  ]);
+
   const timeseries = json.properties?.timeseries;
 
   if (!timeseries || timeseries.length === 0) {
@@ -60,5 +93,10 @@ export async function fetchWeather(
     precipitation: nextHour?.details?.precipitation_amount,
     forecastTime: current.time,
     updatedAt: json.properties.meta.updated_at,
+    fogAreaFraction: details.fog_area_fraction,
+    cloudAreaFraction: details.cloud_area_fraction,
+    probabilityOfThunder: details.probability_of_thunder,
+    waveHeight: wave.height,
+    waveDataUnavailable: wave.unavailable,
   };
 }

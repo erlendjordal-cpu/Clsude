@@ -1,10 +1,12 @@
-import { Clock, Gauge, Navigation, Thermometer, Wind } from 'lucide-react-native';
+import { Clock, Eye, Gauge, Navigation, Thermometer, Waves, Wind, Zap } from 'lucide-react-native';
 import { View, Text } from 'react-native';
 
 import type { WeatherSnapshot } from '@/types/weather';
 import {
   degreesToCompass,
   formatUpdatedAt,
+  thunderRiskLabel,
+  visibilityLabel,
   windSpeedLabel,
 } from '@/utils/weatherDisplay';
 
@@ -22,6 +24,19 @@ const levelColors: Record<string, string> = {
   severe: 'text-offshore-danger',
 };
 
+const visibilityColors: Record<string, string> = {
+  good: 'text-offshore-accent',
+  reduced: 'text-offshore-accentAlt',
+  poor: 'text-offshore-warning',
+};
+
+const thunderColors: Record<string, string> = {
+  none: 'text-offshore-accent',
+  low: 'text-offshore-accentAlt',
+  moderate: 'text-offshore-warning',
+  high: 'text-offshore-danger',
+};
+
 export function WeatherCard({
   locationName,
   latitude,
@@ -30,6 +45,10 @@ export function WeatherCard({
 }: WeatherCardProps) {
   const wind = windSpeedLabel(weather.windSpeed);
   const windColorClass = levelColors[wind.level];
+  const visibility = visibilityLabel(weather.fogAreaFraction);
+  const visibilityColorClass = visibilityColors[visibility.level];
+  const thunder = thunderRiskLabel(weather.probabilityOfThunder);
+  const thunderColorClass = thunderColors[thunder.level];
 
   return (
     <View className="rounded-3xl border border-offshore-border bg-offshore-surface p-6">
@@ -113,6 +132,60 @@ export function WeatherCard({
             </Text>
             <Text className="text-lg font-semibold text-offshore-text">
               {Math.round(weather.pressure)} hPa
+            </Text>
+          </View>
+        </View>
+      ) : null}
+
+      {weather.fogAreaFraction !== undefined ? (
+        <View className="mt-4 flex-row items-center">
+          <View className="h-14 w-14 items-center justify-center rounded-2xl bg-offshore-surfaceAlt">
+            <Eye color="#38BDF8" size={26} strokeWidth={2.2} />
+          </View>
+          <View className="ml-3">
+            <Text className="text-xs uppercase tracking-wide text-offshore-textMuted">
+              Sikt (tåkeandel)
+            </Text>
+            <Text className="text-lg font-semibold text-offshore-text">
+              {Math.round(weather.fogAreaFraction)} %
+            </Text>
+            <Text className={`text-xs font-medium ${visibilityColorClass}`}>
+              {visibility.label}
+            </Text>
+          </View>
+        </View>
+      ) : null}
+
+      {weather.waveHeight !== undefined ? (
+        <View className="mt-4 flex-row items-center">
+          <View className="h-14 w-14 items-center justify-center rounded-2xl bg-offshore-surfaceAlt">
+            <Waves color="#38BDF8" size={26} strokeWidth={2.2} />
+          </View>
+          <View className="ml-3">
+            <Text className="text-xs uppercase tracking-wide text-offshore-textMuted">
+              Bølgehøyde
+            </Text>
+            <Text className="text-lg font-semibold text-offshore-text">
+              {weather.waveHeight.toFixed(1)} m
+            </Text>
+          </View>
+        </View>
+      ) : null}
+
+      {weather.probabilityOfThunder !== undefined ? (
+        <View className="mt-4 flex-row items-center">
+          <View className="h-14 w-14 items-center justify-center rounded-2xl bg-offshore-surfaceAlt">
+            <Zap color="#38BDF8" size={26} strokeWidth={2.2} />
+          </View>
+          <View className="ml-3">
+            <Text className="text-xs uppercase tracking-wide text-offshore-textMuted">
+              Lynrisiko
+            </Text>
+            <Text className="text-lg font-semibold text-offshore-text">
+              {Math.round(weather.probabilityOfThunder)} %
+            </Text>
+            <Text className={`text-xs font-medium ${thunderColorClass}`}>
+              {thunder.label}
             </Text>
           </View>
         </View>

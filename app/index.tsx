@@ -2,6 +2,7 @@ import { AlertTriangle, RefreshCw } from 'lucide-react-native';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { LandingProbabilityCard } from '@/components/LandingProbabilityCard';
 import { WeatherCard } from '@/components/WeatherCard';
 import { SLEIPNER_LOCATION } from '@/constants/location';
 import { useWeather } from '@/hooks/useWeather';
@@ -59,12 +60,15 @@ export default function HomeScreen() {
             </Pressable>
           </View>
         ) : data ? (
-          <WeatherCard
-            locationName={SLEIPNER_LOCATION.name}
-            latitude={SLEIPNER_LOCATION.latitude}
-            longitude={SLEIPNER_LOCATION.longitude}
-            weather={data}
-          />
+          <>
+            <WeatherCard
+              locationName={SLEIPNER_LOCATION.name}
+              latitude={SLEIPNER_LOCATION.latitude}
+              longitude={SLEIPNER_LOCATION.longitude}
+              weather={data}
+            />
+            <LandingProbabilityCard weather={data} />
+          </>
         ) : null}
       </ScrollView>
     </SafeAreaView>
