@@ -3,7 +3,7 @@ import type {
   ForecastPoint,
   MetNoForecastResponse,
   MetNoOceanForecastResponse,
-  MetNoOceanTimeStep,
+  WeatherForecast,
   WeatherSnapshot,
 } from '@/types/weather';
 
@@ -47,49 +47,41 @@ async function fetchJson<T>(url: string): Promise<T> {
 async function fetchOceanTimeseries(
   latitude: number,
   longitude: number
-): Promise<MetNoOceanTimeStep[]> {
+): Promise<Map<string, number>> {
   try {
     const json = await fetchJson<MetNoOceanForecastResponse>(
       `${OCEANFORECAST_URL}?lat=${latitude}&lon=${longitude}`
     );
-    return json.properties?.timeseries ?? [];
+    const map = new Map<string, number>();
+    for (const step of json.properties?.timeseries ?? []) {
+      const h = step.data?.instant?.details?.sea_surface_wave_height;
+      if (typeof h === 'number') map.set(step.time, h);
+    }
+    return map;
   } catch {
-    return [];
+    return new Map();
   }
 }
-
-const MAX_OCEAN_MATCH_MS = 6 * 60 * 60 * 1000;
 
 function findWaveHeight(
-  oceanPoints: MetNoOceanTimeStep[],
-  targetTime: string
+  time: string,
+  oceanMap: Map<string, number>
 ): number | undefined {
-  const targetMs = new Date(targetTime).getTime();
-  let closest: MetNoOceanTimeStep | undefined;
-  let closestDiff = Infinity;
-
-  for (const point of oceanPoints) {
-    const diff = Math.abs(new Date(point.time).getTime() - targetMs);
-    if (diff < closestDiff) {
-      closestDiff = diff;
-      closest = point;
+  if (oceanMap.has(time)) return oceanMap.get(time);
+  const target = new Date(time).getTime();
+  for (const [key, val] of oceanMap) {
+    if (Math.abs(new Date(key).getTime() - target) <= 6 * 3_600_000) {
+      return val;
     }
   }
-
-  if (!closest || closestDiff > MAX_OCEAN_MATCH_MS) return undefined;
-  return closest.data?.instant?.details?.sea_surface_wave_height;
+  return undefined;
 }
 
-export interface WeatherData {
-  current: WeatherSnapshot;
-  points: ForecastPoint[];
-}
-
-export async function fetchWeatherData(
+export async function fetchForecast(
   latitude: number,
   longitude: number
-): Promise<WeatherData> {
-  const [json, oceanPoints] = await Promise.all([
+): Promise<WeatherForecast> {
+  const [json, oceanMap] = await Promise.all([
     fetchJson<MetNoForecastResponse>(
       `${LOCATIONFORECAST_URL}?lat=${latitude}&lon=${longitude}`
     ),
@@ -97,50 +89,57 @@ export async function fetchWeatherData(
   ]);
 
   const timeseries = json.properties?.timeseries;
-
   if (!timeseries || timeseries.length === 0) {
     throw new WeatherApiError('Ingen værdata tilgjengelig for denne posisjonen.');
   }
 
-  const points: ForecastPoint[] = timeseries.map((step) => {
-    const details = step.data.instant.details;
-    const nextHour = step.data.next_1_hours ?? step.data.next_6_hours;
-
+  const hourly: ForecastPoint[] = timeseries.map((step) => {
+    const d = step.data.instant.details;
+    const next = step.data.next_1_hours ?? step.data.next_6_hours;
     return {
       time: step.time,
-      temperature: details.air_temperature,
-      windSpeed: details.wind_speed,
-      windFromDirection: details.wind_from_direction,
-      windGust: details.wind_speed_of_gust,
-      symbolCode: nextHour?.summary.symbol_code,
-      precipitation: nextHour?.details?.precipitation_amount,
-      fogAreaFraction: details.fog_area_fraction,
-      cloudAreaFraction: details.cloud_area_fraction,
-      probabilityOfThunder: details.probability_of_thunder,
-      waveHeight: findWaveHeight(oceanPoints, step.time),
+      temperature: d.air_temperature,
+      windSpeed: d.wind_speed,
+      windFromDirection: d.wind_from_direction,
+      windGust: d.wind_speed_of_gust,
+      precipitation: next?.details?.precipitation_amount,
+      symbolCode: next?.summary.symbol_code,
+      fogAreaFraction: d.fog_area_fraction,
+      cloudAreaFraction: d.cloud_area_fraction,
+      probabilityOfThunder: d.probability_of_thunder,
+      waveHeight: findWaveHeight(step.time, oceanMap),
     };
   });
 
-  const first = points[0];
-  const firstDetails = timeseries[0].data.instant.details;
-
+  const first = timeseries[0];
+  const d0 = first.data.instant.details;
+  const next0 = first.data.next_1_hours ?? first.data.next_6_hours;
   const current: WeatherSnapshot = {
-    temperature: first.temperature,
-    windSpeed: first.windSpeed,
-    windFromDirection: first.windFromDirection,
-    windGust: first.windGust,
-    humidity: firstDetails.relative_humidity,
-    pressure: firstDetails.air_pressure_at_sea_level,
-    symbolCode: first.symbolCode,
-    precipitation: first.precipitation,
+    temperature: d0.air_temperature,
+    windSpeed: d0.wind_speed,
+    windFromDirection: d0.wind_from_direction,
+    windGust: d0.wind_speed_of_gust,
+    humidity: d0.relative_humidity,
+    pressure: d0.air_pressure_at_sea_level,
+    symbolCode: next0?.summary.symbol_code,
+    precipitation: next0?.details?.precipitation_amount,
     forecastTime: first.time,
     updatedAt: json.properties.meta.updated_at,
-    fogAreaFraction: first.fogAreaFraction,
-    cloudAreaFraction: first.cloudAreaFraction,
-    probabilityOfThunder: first.probabilityOfThunder,
-    waveHeight: first.waveHeight,
-    waveDataUnavailable: oceanPoints.length === 0,
+    fogAreaFraction: d0.fog_area_fraction,
+    cloudAreaFraction: d0.cloud_area_fraction,
+    probabilityOfThunder: d0.probability_of_thunder,
+    waveHeight: findWaveHeight(first.time, oceanMap),
+    waveDataUnavailable: oceanMap.size === 0,
   };
 
-  return { current, points };
+  return { current, hourly, updatedAt: json.properties.meta.updated_at };
+}
+
+// Legacy single-snapshot fetch kept for compatibility
+export async function fetchWeather(
+  latitude: number,
+  longitude: number
+): Promise<WeatherSnapshot> {
+  const forecast = await fetchForecast(latitude, longitude);
+  return forecast.current;
 }

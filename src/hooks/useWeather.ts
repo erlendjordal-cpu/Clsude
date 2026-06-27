@@ -1,20 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { fetchWeatherData, WeatherApiError } from '@/services/weather';
-import type { ForecastPoint, WeatherSnapshot } from '@/types/weather';
+import { fetchForecast, WeatherApiError } from '@/services/weather';
+import type { WeatherForecast } from '@/types/weather';
 
-interface UseWeatherResult {
-  data: WeatherSnapshot | null;
-  points: ForecastPoint[];
+interface UseForecastResult {
+  data: WeatherForecast | null;
   loading: boolean;
   refreshing: boolean;
   error: string | null;
   refresh: () => Promise<void>;
 }
 
-export function useWeather(latitude: number, longitude: number): UseWeatherResult {
-  const [data, setData] = useState<WeatherSnapshot | null>(null);
-  const [points, setPoints] = useState<ForecastPoint[]>([]);
+export function useForecast(latitude: number, longitude: number): UseForecastResult {
+  const [data, setData] = useState<WeatherForecast | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,9 +22,8 @@ export function useWeather(latitude: number, longitude: number): UseWeatherResul
       isRefresh ? setRefreshing(true) : setLoading(true);
       setError(null);
       try {
-        const weatherData = await fetchWeatherData(latitude, longitude);
-        setData(weatherData.current);
-        setPoints(weatherData.points);
+        const forecast = await fetchForecast(latitude, longitude);
+        setData(forecast);
       } catch (err) {
         const message =
           err instanceof WeatherApiError
@@ -46,5 +43,5 @@ export function useWeather(latitude: number, longitude: number): UseWeatherResul
 
   const refresh = useCallback(() => load(true), [load]);
 
-  return { data, points, loading, refreshing, error, refresh };
+  return { data, loading, refreshing, error, refresh };
 }

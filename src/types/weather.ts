@@ -82,3 +82,23 @@ export interface WeatherSnapshot {
   waveHeight?: number;
   waveDataUnavailable?: boolean;
 }
+
+export interface ForecastPoint {
+  time: string;
+  temperature: number;
+  windSpeed: number;
+  windFromDirection: number;
+  windGust?: number;
+  precipitation?: number;
+  symbolCode?: string;
+  fogAreaFraction?: number;
+  cloudAreaFraction?: number;
+  probabilityOfThunder?: number;
+  waveHeight?: number;
+}
+
+export interface WeatherForecast {
+  current: WeatherSnapshot;
+  hourly: ForecastPoint[];
+  updatedAt: string;
+}
