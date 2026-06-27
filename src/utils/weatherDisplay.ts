@@ -43,15 +43,15 @@ export function thunderRiskLabel(probabilityOfThunder?: number): {
   return { label: 'Høy lynrisiko', level: 'high' };
 }
 
-export function visibilityLabel(fogAreaFraction?: number): {
+export function fogProbabilityLabel(fogAreaFraction?: number): {
   label: string;
-  level: 'good' | 'reduced' | 'poor';
+  level: 'low' | 'moderate' | 'high';
 } {
   if (fogAreaFraction === undefined || fogAreaFraction < 20) {
-    return { label: 'God sikt', level: 'good' };
+    return { label: 'Lav sannsynlighet for tåke', level: 'low' };
   }
   if (fogAreaFraction < 60) {
-    return { label: 'Redusert sikt (tåke)', level: 'reduced' };
+    return { label: 'Moderat sannsynlighet for tåke', level: 'moderate' };
   }
-  return { label: 'Dårlig sikt (tåke)', level: 'poor' };
+  return { label: 'Høy sannsynlighet for tåke', level: 'high' };
 }

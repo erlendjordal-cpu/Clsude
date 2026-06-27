@@ -1,14 +1,16 @@
-import { Clock, Eye, Gauge, Navigation, Thermometer, Waves, Wind, Zap } from 'lucide-react-native';
-import { View, Text } from 'react-native';
+import { Clock, CloudFog, ExternalLink, Gauge, Navigation, Thermometer, Waves, Wind, Zap } from 'lucide-react-native';
+import { Linking, Pressable, View, Text } from 'react-native';
 
 import type { WeatherSnapshot } from '@/types/weather';
 import {
   degreesToCompass,
+  fogProbabilityLabel,
   formatUpdatedAt,
   thunderRiskLabel,
-  visibilityLabel,
   windSpeedLabel,
 } from '@/utils/weatherDisplay';
+
+const LIGHTNING_MAP_URL = 'https://www.lightningmaps.org/';
 
 interface WeatherCardProps {
   locationName: string;
@@ -24,10 +26,10 @@ const levelColors: Record<string, string> = {
   severe: 'text-offshore-danger',
 };
 
-const visibilityColors: Record<string, string> = {
-  good: 'text-offshore-accent',
-  reduced: 'text-offshore-accentAlt',
-  poor: 'text-offshore-warning',
+const fogColors: Record<string, string> = {
+  low: 'text-offshore-accent',
+  moderate: 'text-offshore-accentAlt',
+  high: 'text-offshore-warning',
 };
 
 const thunderColors: Record<string, string> = {
@@ -45,8 +47,8 @@ export function WeatherCard({
 }: WeatherCardProps) {
   const wind = windSpeedLabel(weather.windSpeed);
   const windColorClass = levelColors[wind.level];
-  const visibility = visibilityLabel(weather.fogAreaFraction);
-  const visibilityColorClass = visibilityColors[visibility.level];
+  const fog = fogProbabilityLabel(weather.fogAreaFraction);
+  const fogColorClass = fogColors[fog.level];
   const thunder = thunderRiskLabel(weather.probabilityOfThunder);
   const thunderColorClass = thunderColors[thunder.level];
 
@@ -140,17 +142,17 @@ export function WeatherCard({
       {weather.fogAreaFraction !== undefined ? (
         <View className="mt-4 flex-row items-center">
           <View className="h-14 w-14 items-center justify-center rounded-2xl bg-offshore-surfaceAlt">
-            <Eye color="#38BDF8" size={26} strokeWidth={2.2} />
+            <CloudFog color="#38BDF8" size={26} strokeWidth={2.2} />
           </View>
           <View className="ml-3">
             <Text className="text-xs uppercase tracking-wide text-offshore-textMuted">
-              Sikt (tåkeandel)
+              Sannsynlighet for tåke (spådd)
             </Text>
             <Text className="text-lg font-semibold text-offshore-text">
               {Math.round(weather.fogAreaFraction)} %
             </Text>
-            <Text className={`text-xs font-medium ${visibilityColorClass}`}>
-              {visibility.label}
+            <Text className={`text-xs font-medium ${fogColorClass}`}>
+              {fog.label}
             </Text>
           </View>
         </View>
@@ -179,7 +181,7 @@ export function WeatherCard({
           </View>
           <View className="ml-3">
             <Text className="text-xs uppercase tracking-wide text-offshore-textMuted">
-              Lynrisiko
+              Lynrisiko (spådd)
             </Text>
             <Text className="text-lg font-semibold text-offshore-text">
               {Math.round(weather.probabilityOfThunder)} %
@@ -190,6 +192,16 @@ export function WeatherCard({
           </View>
         </View>
       ) : null}
+
+      <Pressable
+        onPress={() => Linking.openURL(LIGHTNING_MAP_URL)}
+        className="mt-4 flex-row items-center justify-center rounded-2xl border border-offshore-border bg-offshore-surfaceAlt px-4 py-3"
+      >
+        <ExternalLink color="#8B97AC" size={16} />
+        <Text className="ml-2 text-sm font-medium text-offshore-textMuted">
+          Se faktisk registrert lyn (lightningmaps.org)
+        </Text>
+      </Pressable>
 
       <View className="mt-6 flex-row items-center justify-center border-t border-offshore-border pt-4">
         <Clock color="#8B97AC" size={14} />
