@@ -95,7 +95,7 @@ export async function fetchHelicopterDepartures(): Promise<AvinorFlight[]> {
   let res: Response;
   try {
     res = await fetch(
-      `${AVINOR_API}?airport=SVG&direction=D&serviceType=E&TimeFrom=-2&TimeTo=168`,
+      `${AVINOR_API}?airport=SVG&direction=D&serviceType=E&TimeFrom=1&TimeTo=7`,
       { headers: { 'User-Agent': WEATHER_USER_AGENT, Accept: 'text/xml, application/xml' } }
     );
   } catch {
