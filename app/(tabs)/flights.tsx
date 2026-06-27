@@ -1,5 +1,5 @@
-import { AlertTriangle } from 'lucide-react-native';
-import { ScrollView, Text, View } from 'react-native';
+import { AlertTriangle, ExternalLink } from 'lucide-react-native';
+import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FlightCard } from '@/components/FlightCard';
@@ -32,6 +32,32 @@ export default function FlightsScreen() {
       <ScrollView
         contentContainerStyle={{ padding: 16, paddingTop: 8, paddingBottom: 32 }}
       >
+        {/* Heliport.no link */}
+        <Pressable
+          onPress={() => Linking.openURL('https://www.heliport.no/flights?port=SVG')}
+          style={({ pressed }) => ({
+            backgroundColor: pressed ? '#1E3A5F' : '#162840',
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: '#2DD4BF55',
+            padding: 14,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 12,
+          })}
+        >
+          <View>
+            <Text style={{ fontSize: 14, fontWeight: '700', color: '#2DD4BF' }}>
+              Åpne Heliport.no
+            </Text>
+            <Text style={{ fontSize: 11, color: '#8B97AC', marginTop: 2 }}>
+              Sanntids avganger fra Stavanger (SVG)
+            </Text>
+          </View>
+          <ExternalLink color="#2DD4BF" size={18} />
+        </Pressable>
+
         {/* Disclaimer */}
         <View
           style={{
@@ -47,9 +73,8 @@ export default function FlightsScreen() {
         >
           <AlertTriangle color="#F59E0B" size={16} style={{ marginTop: 1 }} />
           <Text style={{ flex: 1, fontSize: 11, color: '#8B97AC', lineHeight: 16 }}>
-            Disse avgangene er illustrative eksempler. Faktiske flyplaner fastsettes av
-            operatøren (CHC/Bristow) og Equinor. Kontakt din personaltransportkoordinator
-            for offisielle avgangstider.
+            Avgangene under er illustrative eksempler. For offisielle tider, bruk Heliport.no
+            eller kontakt din personaltransportkoordinator.
           </Text>
         </View>
 
