@@ -24,16 +24,25 @@ function getTag(xml: string, name: string): string | undefined {
   return m?.[1]?.trim() || undefined;
 }
 
+function isOffshoreCode(code: string | undefined): boolean {
+  // Offshore platform codes follow the pattern: digit + 2 letters (e.g. 1SP, 2LE, 3BE)
+  return !!code && /^\d[A-Z]{2}$/.test(code);
+}
+
 function parseFlights(xml: string): AvinorFlight[] {
   const out: AvinorFlight[] = [];
   const re = /<flight\s+uniqueID="([^"]*)">([\s\S]*?)<\/flight>/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(xml)) !== null) {
     const body = m[2];
-    const sm = body.match(/<status(?:\s+code="([^"]*)")?(?:\s+time="([^"]*)")?/);
     const via = getTag(body, 'via_airport');
     const apt = getTag(body, 'airport');
     const dest = via && via !== 'SVG' ? via : apt !== 'SVG' ? apt : undefined;
+
+    // Only include flights going to/via an offshore platform code
+    if (!isOffshoreCode(via) && !isOffshoreCode(apt)) continue;
+
+    const sm = body.match(/<status(?:\s+code="([^"]*)")?(?:\s+time="([^"]*)")?/);
     out.push({
       uniqueId: m[1],
       flightId: getTag(body, 'flight_id') ?? '',
