@@ -48,38 +48,47 @@ export function AvinorFlightCard({ flight }: Props) {
         opacity: isCancelled ? 0.7 : 1,
       }}
     >
+      {/* Top row: time, route, status */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-          <View>
+          {/* Departure */}
+          <View style={{ minWidth: 44 }}>
             <Text style={{ fontSize: 18, fontWeight: '700', color: '#E5EAF2' }}>
               {displayTime}
             </Text>
             {isNewTime && (
-              <Text style={{ fontSize: 10, color: '#8B97AC', textDecorationLine: 'line-through', marginTop: 1 }}>
+              <Text style={{ fontSize: 10, color: '#8B97AC', textDecorationLine: 'line-through' }}>
                 {localTime(flight.scheduledTime)}
               </Text>
             )}
-            <Text style={{ fontSize: 11, color: '#8B97AC', marginTop: isNewTime ? 0 : 1 }}>
-              SVG
-            </Text>
+            <Text style={{ fontSize: 11, color: '#8B97AC', marginTop: 1 }}>SVG</Text>
           </View>
 
-          <View style={{ marginHorizontal: 12, alignItems: 'center' }}>
-            <ArrowRight color="#8B97AC" size={16} strokeWidth={2} />
-          </View>
+          <ArrowRight color="#8B97AC" size={14} strokeWidth={2} style={{ marginHorizontal: 8 }} />
 
-          <View>
-            <Text style={{ fontSize: 18, fontWeight: '700', color: '#E5EAF2' }}>
-              {flight.destination ?? '—'}
-            </Text>
-            {flight.gate ? (
-              <Text style={{ fontSize: 11, color: '#8B97AC', marginTop: 1 }}>
-                Gate {flight.gate}
-              </Text>
-            ) : null}
+          {/* Stops */}
+          <View style={{ flex: 1 }}>
+            {flight.stopNames.length > 0 ? (
+              flight.stopNames.map((name, i) => (
+                <View key={i} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  {i > 0 && (
+                    <Text style={{ fontSize: 10, color: '#8B97AC', marginRight: 4 }}>→</Text>
+                  )}
+                  <Text
+                    style={{ fontSize: 13, fontWeight: i === 0 ? '600' : '400', color: '#E5EAF2' }}
+                    numberOfLines={1}
+                  >
+                    {name}
+                  </Text>
+                </View>
+              ))
+            ) : (
+              <Text style={{ fontSize: 13, color: '#8B97AC' }}>—</Text>
+            )}
           </View>
         </View>
 
+        {/* Status badge */}
         <View
           style={{
             backgroundColor: color + '22',
@@ -88,23 +97,31 @@ export function AvinorFlightCard({ flight }: Props) {
             paddingVertical: 4,
             borderWidth: 1,
             borderColor: color + '55',
+            marginLeft: 8,
           }}
         >
           <Text style={{ fontSize: 11, fontWeight: '700', color }}>{label}</Text>
         </View>
       </View>
 
+      {/* Details row */}
       <View style={{ flexDirection: 'row', marginTop: 10, gap: 16 }}>
         <View>
-          <Text style={{ fontSize: 10, color: '#8B97AC' }}>Flightnummer</Text>
-          <Text style={{ fontSize: 12, color: '#C5D0DC', fontWeight: '500' }}>
+          <Text style={{ fontSize: 10, color: '#8B97AC' }}>Rutenr</Text>
+          <Text style={{ fontSize: 12, color: '#C5D0DC', fontWeight: '600' }}>
             {flight.flightId}
           </Text>
         </View>
         <View>
           <Text style={{ fontSize: 10, color: '#8B97AC' }}>Operatør</Text>
-          <Text style={{ fontSize: 12, color: '#C5D0DC' }}>{flight.airline}</Text>
+          <Text style={{ fontSize: 12, color: '#C5D0DC' }}>{flight.airlineName}</Text>
         </View>
+        {flight.gate ? (
+          <View>
+            <Text style={{ fontSize: 10, color: '#8B97AC' }}>Gate</Text>
+            <Text style={{ fontSize: 12, color: '#C5D0DC' }}>{flight.gate}</Text>
+          </View>
+        ) : null}
         {flight.delayed && !isNewTime ? (
           <View>
             <Text style={{ fontSize: 10, color: '#8B97AC' }}>Status</Text>
